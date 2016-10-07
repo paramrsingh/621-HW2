@@ -1,3 +1,6 @@
+library(e1071)
+library(caret)
+
 class_output <- read.csv("classification-output-data.csv")
 #Raw Confusion Matrix
 conf_matrix <- table(class_output$class,class_output$scored.class)
@@ -77,6 +80,19 @@ precision=function(df){
 
 cat("\nPrecision:", precision_var <- precision(class_output))
 
+#Function to compute Specificity 
+specificity=function(df){
+  #True Negative - Actual class is negative and predicted class is negative
+  TN = sum((df$class==0) & (df$scored.class==0))
+  #False positive - Actual class is negative and predicted class is positive
+  FP = sum((df$class==0) & (df$scored.class==1))
+  #Compute Specificity
+  specificity = TN/(TN+FP)
+  return(specificity)
+}
+
+cat("Specificity:",specificity_var <- specificity(class_output))
+
 f1score <- function(df, precision_var, sensitivity_var){
   #True positive - Actual class is positive and predicted class is positive
   TP = sum((df$class==1) & (df$scored.class==1))
@@ -92,3 +108,21 @@ f1score <- function(df, precision_var, sensitivity_var){
 }
 
 cat("\nF1Score: ", f1score_var <- f1score(class_output, precision_var, sensitivity_var))
+
+
+#9 - The F1 score is calculated using Sensitivity and Specificty and lies on the ROC curve.
+# By that definition the F1 score will always lie between 0 and 1
+
+#12 Caret Package
+caret_conf_matrix <- confusionMatrix(class_output$class,class_output$scored.class)
+#Both the caret package and table function produce the same confusion matrix
+print(caret_conf_matrix$table)
+cat("Confusion Matrix\n")
+print(conf_matrix)
+
+#The Sensitivity created by caret does not match our own function (0.474 with caret vs 0.799 with our own)
+print(caret_conf_matrix$byClass[1])
+print(sensitivity_var)
+#The Specificity is closer, but not a perfect match (0.96 with caret and 0.84 with our own)
+print(caret_conf_matrix$byClass[2])
+print(specificity_var)
